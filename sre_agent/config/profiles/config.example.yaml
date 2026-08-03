@@ -1,0 +1,209 @@
+# Example SRE Agent Configuration
+# Copy this file to config.yaml and customize for your environment
+
+# =============================================================================
+# PROJECT IDENTIFICATION
+# =============================================================================
+project:
+  id: "1234"                           # Project number
+  name: "Project_1"                     # Project name
+  system_name_number: "DC6"             # System identifier (DC6, WG1, etc.)
+  naming_format: "<{project_id}>_{project_name}_{system_name_number}"
+
+# =============================================================================
+# PROXMOX NODES
+# =============================================================================
+proxmox:
+  inventory_on_start: true              # Auto-discover inventory on startup
+  scan_on_connect: true                  # Scan config when connecting
+  
+  nodes:
+    - name: "srv1"                       # Node identifier
+      host: "https://192.0.2.10:8006"     # RFC 5737 example address
+      port: 8006                         # API port (default: 8006)
+      token: "root@pam!sre-agent=<TOKEN>" # API token (inline)
+      # OR reference a secret by name instead of inlining it — the coordinator
+      # resolves it via the secrets provider (encrypted store / env / Bitwarden):
+      # token_secret: "proxmox_srv1"     # resolves SRE_SECRET_PROXMOX_SRV1 (env provider)
+      # TLS: verification is ON by default. For a self-signed Proxmox cert,
+      # prefer pointing ca_cert at the Proxmox CA instead of disabling checks:
+      ca_cert: "/etc/pve/pve-root-ca.pem"  # CA bundle to trust (recommended)
+      # verify_ssl: false                # Last resort: disable verification (insecure)
+
+    - name: "srv2"
+      host: "https://192.0.2.11:8006"
+      port: 8006
+      token: "root@pam!sre-agent=<TOKEN>"
+      ca_cert: "/etc/pve/pve-root-ca.pem"  # CA bundle to trust (recommended)
+      # verify_ssl: false                # Last resort: disable verification (insecure)
+    
+    # Add more nodes as needed
+    # - name: "srv3"
+    #   host: "192.168.1.3"
+    #   ...
+
+# =============================================================================
+# HETZNER CLOUD
+# =============================================================================
+hetzner:
+  token: "<HETZNER_API_TOKEN>"          # Hetzner Cloud API token
+  endpoint: "https://api.hetzner.cloud/v1"  # API endpoint
+
+# =============================================================================
+# NETWORKS & EXTERNAL IPs
+# =============================================================================
+networks:
+  external_ip: "192.0.2.10"             # RFC 5737 example address
+  
+  # VLAN configuration (customizable)
+  vlan_config:
+    management:
+      vlan_id: 100
+      subnet: "172.16.100.0/24"
+      gateway: "172.16.100.1"
+    
+    production:
+      vlan_id: 200
+      subnet: "172.16.200.0/24"
+      gateway: "172.16.200.1"
+    
+    development:
+      vlan_id: 300
+      subnet: "172.16.30.0/24"
+      gateway: "172.16.30.1"
+
+# =============================================================================
+# OBSERVABILITY
+# =============================================================================
+observability:
+  metrics_backend: "none"               # none | prometheus | zabbix
+  
+  # Prometheus configuration
+  prometheus_url: "http://prometheus:9090"
+  prometheus_query_timeout: 30
+  
+  # Zabbix configuration (if used)
+  zabbix:
+    url: "http://zabbix-server/api_jsonrpc.php"
+    token: "<ZABBIX_API_TOKEN>"
+
+# =============================================================================
+# GITLAB TERRAFORM STATE
+# =============================================================================
+gitlab:
+  url: "https://gitlab.example.com"
+  project: "admins/hetzner_proxmox"
+  token: "<GITLAB_TOKEN>"
+  tf_backend: "local"                   # local | gitlab
+
+# =============================================================================
+# APPROVAL WORKFLOW
+# =============================================================================
+approvals:
+  primary_channel: "slack"              # slack | gmail | both
+  batch_window_minutes: 180              # 3 hours
+  per_action_granularity: true           # Allow per-action approve/decline
+  allow_batch_decline: true              # Allow declining entire batch
+  # Allow-list of identities permitted to approve. FAIL-CLOSED: if empty, NO
+  # ONE can approve. Add your on-call engineers here.
+  authorized_approvers: []               # e.g. ["alice@altoros.com", "bob@altoros.com"]
+  allow_self_approval: false             # may an approver approve their own request?
+  
+  # Slack configuration
+  slack:
+    enabled: true
+    webhook_url: "<SLACK_WEBHOOK_URL>"
+    channel: "#sre-approvals"
+    # Optional: Bot token for interactive buttons
+    bot_token: ""
+    signing_secret: ""
+  
+  # Gmail configuration
+  gmail:
+    enabled: false
+    smtp_server: "smtp.gmail.com"
+    smtp_port: 587
+    email: "sre-automation@example.com"
+    app_password: "<APP_PASSWORD>"
+    group_email: "sre-approvals@example.com"  # Google Group for approvals
+
+# =============================================================================
+# OPERATION POLICIES
+# =============================================================================
+operations:
+  # Read-only operations (auto-approved)
+  read_only:
+    - list_nodes
+    - list_vms
+    - list_containers
+    - get_vm_status
+    - get_node_metrics
+    - get_storage_usage
+    - list_snapshots
+    - list_backups
+    - get_cluster_status
+    - get_network_config
+  
+  # Safe write operations (auto-approved)
+  write_safe:
+    - start_vm
+    - stop_vm
+    - restart_vm
+    - create_snapshot
+    - resize_vm
+    - mount_iso
+    - attach_volume
+    - detach_volume
+  
+  # Operations requiring explicit approval
+  approval_required:
+    - delete_vm
+    - delete_snapshot
+    - delete_container
+    - network_change
+    - firewall_change
+    - delete_backup
+    - stop_production_vm
+    - migrate_vm
+    - reboot_node
+    - storage_config
+    - create_vm
+    - create_container
+    - modify_vm_config
+
+# =============================================================================
+# SECURITY & SAFETY
+# =============================================================================
+security:
+  audit_log_location: "/var/log/sre_agent/audit.log"
+  
+  # Emergency auto-actions (allowed without approval in critical situations)
+  emergency_auto_actions:
+    - delete_old_backups
+    - stop_non_production_vm
+    - delete_temp_files
+  
+  # Emergency exclusions (can be auto-deleted to preserve uptime)
+  emergency_exclusions:
+    - temporary_files
+    - outdated_backups
+
+# =============================================================================
+# DISCOVERY & INVENTORY
+# =============================================================================
+discovery:
+  enabled: true
+  schedule: "@daily"                     # Cron schedule for auto-discovery
+  network_scan: true                     # Include network config in discovery
+  storage_scan: true                     # Include storage info in discovery
+
+# =============================================================================
+# ENVIRONMENT-SPECIFIC OVERRIDES
+# =============================================================================
+# You can create separate files for different environments:
+# - config.production.yaml
+# - config.staging.yaml
+# - config.development.yaml
+#
+# Usage: SREAgent(config_path="config.production.yaml")
+# Or: load_config(profile="production")

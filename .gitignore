@@ -1,0 +1,33 @@
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+.eggs/
+
+# Config files with real secrets
+config.yaml
+config.local.yaml
+.env
+# runtime secret-store dir at repo root only (NOT the sre_agent/secrets package)
+/secrets/
+# local token files — must never be committed
+SREagent.rtf
+*.rtf
+*_token
+.sre_gl_token
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# OS
+.DS_Store
+
+# Coverage
+.coverage
+coverage.xml
+htmlcov/
+.pytest_cache/

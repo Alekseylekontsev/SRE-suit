@@ -1,0 +1,38 @@
+# Staging Environment Configuration
+
+project:
+  id: "1234"
+  name: "Project_1"
+  system_name_number: "STAGING"
+
+proxmox:
+  inventory_on_start: true
+  scan_on_connect: true
+  nodes:
+    - name: "staging-srv1"
+      host: "${STAGING_HOST}"
+      token: "${STAGING_TOKEN}"
+      verify_ssl: false
+
+networks:
+  external_ip: "${STAGING_EXTERNAL_IP}"
+
+observability:
+  metrics_backend: "prometheus"
+  prometheus_url: "${PROMETHEUS_URL}"
+
+approvals:
+  primary_channel: "slack"
+  batch_window_minutes: 180
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_STAGING}"
+    channel: "#sre-staging-approvals"
+
+security:
+  emergency_auto_actions:
+    - delete_old_backups
+
+discovery:
+  enabled: true
+  schedule: "@daily"

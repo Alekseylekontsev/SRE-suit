@@ -1,0 +1,44 @@
+# Production Environment Configuration
+# High security, strict approval requirements
+
+project:
+  id: "1234"
+  name: "Project_1"
+  system_name_number: "DC6"
+
+proxmox:
+  inventory_on_start: true
+  scan_on_connect: true
+  nodes:
+    - name: "srv1"
+      host: "https://192.0.2.10:8006"
+      token: "${PROXMOX_SRV1_TOKEN}"
+      verify_ssl: false
+    
+    - name: "srv2"
+      host: "https://192.0.2.11:8006"
+      token: "${PROXMOX_SRV2_TOKEN}"
+      verify_ssl: false
+
+networks:
+  external_ip: "192.0.2.10"
+
+observability:
+  metrics_backend: "prometheus"
+  prometheus_url: "${PROMETHEUS_URL}"
+
+approvals:
+  primary_channel: "slack"
+  batch_window_minutes: 60               # Shorter window in production
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_PROD}"
+    channel: "#sre-prod-approvals"
+
+security:
+  emergency_auto_actions:
+    - delete_old_backups
+
+discovery:
+  enabled: true
+  schedule: "@hourly"

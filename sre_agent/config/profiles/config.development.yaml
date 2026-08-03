@@ -1,0 +1,34 @@
+# Development Environment Configuration
+# Relaxed settings for testing
+
+project:
+  id: "dev"
+  name: "Development"
+  system_name_number: "DEV"
+
+proxmox:
+  inventory_on_start: false
+  scan_on_connect: false
+  nodes: []
+
+networks:
+  external_ip: null
+
+observability:
+  metrics_backend: "none"
+
+approvals:
+  primary_channel: "slack"
+  batch_window_minutes: 30                # Quick turnaround for testing
+  slack:
+    enabled: true
+    webhook_url: "${SLACK_WEBHOOK_DEV}"
+    channel: "#sre-dev-approvals"
+
+security:
+  emergency_auto_actions:
+    - delete_old_backups
+    - stop_non_production_vm
+
+discovery:
+  enabled: false

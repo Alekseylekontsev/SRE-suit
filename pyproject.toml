@@ -1,0 +1,63 @@
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "sre-agent"
+version = "0.1.0"
+description = "Universal SRE agent for Hetzner Cloud and Proxmox VE with human-in-the-loop approvals"
+readme = "sre_agent/README.md"
+requires-python = ">=3.11"
+license = "Apache-2.0"
+authors = [
+    { name = "Altoros SRE", email = "helpdesk_team@altoros.com" },
+]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: System Administrators",
+    "Topic :: System :: Systems Administration",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+]
+
+# Core stays import-light. `cryptography` is required for the built-in
+# encrypted secrets store (sre_agent.secrets); no hand-rolled crypto.
+dependencies = [
+    "cryptography>=42.0",
+]
+
+[project.optional-dependencies]
+yaml = ["pyyaml>=6.0"]
+tracing = ["opentelemetry-sdk>=1.20"]   # Phase 3: observability/tracing.py (optional)
+reasoning = ["anthropic>=0.40"]         # Phase 3: Claude Agent SDK proposer (optional, lazy-imported)
+durable = []                            # future: Temporal durable-workflow backend
+dev = [
+    "pyyaml>=6.0",
+    "pytest>=8.0",
+    "pytest-cov>=5.0",
+    "ruff>=0.4",
+]
+
+[project.scripts]
+# Coordinator-based CLI (the legacy sre_agent.main entry remains importable).
+sre-agent = "sre_agent.cli:main"
+
+[tool.hatch.build.targets.wheel]
+packages = ["sre_agent"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+source = ["sre_agent"]
+# Relative paths so coverage.xml resolves under the dockerized SonarQube scanner
+# (project is mounted at /usr/src, not the host path).
+relative_files = true

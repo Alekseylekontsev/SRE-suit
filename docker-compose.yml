@@ -1,0 +1,38 @@
+# SRE Agent — run the CLI from a container with everything pre-installed.
+#
+# The agent is a CLI tool, not a long-running daemon, so run it on demand:
+#
+#   docker compose build
+#   docker compose run --rm sre-agent health
+#   docker compose run --rm sre-agent monitor
+#   docker compose run --rm sre-agent status --node srv1 --vmid 100
+#
+# Provide your config as ./config.yaml in this directory (it is mounted
+# read-only at /config/config.yaml and never baked into the image).
+
+services:
+  sre-agent:
+    build: .
+    image: sre-agent:latest
+    # --- hardening ---
+    read_only: true                     # immutable root fs; only the data volume is writable
+    security_opt:
+      - no-new-privileges:true
+    cap_drop:
+      - ALL
+    # --- config (read-only) + writable data (encrypted secret store, audit exports) ---
+    volumes:
+      - ./config.yaml:/config/config.yaml:ro
+      - sre-data:/var/lib/sre-agent
+    tmpfs:
+      - /tmp
+    # Optional: to monitor services on an internal VLAN the bridge can't route to
+    # (e.g. LiteLLM on an internal IP), uncomment to use the host network.
+    # Removes network isolation — enable only when you need internal targets.
+    # network_mode: host
+    # Optional: uncomment to use the LLM reasoning layer (proposals still pass the gate).
+    # environment:
+    #   - ANTHROPIC_API_KEY=${ANTHROPIC_API_KEY}
+
+volumes:
+  sre-data:

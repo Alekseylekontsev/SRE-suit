@@ -1,0 +1,38 @@
+# Keep secrets and junk OUT of the build context / image layers.
+# (The build only needs pyproject.toml, sre_agent/, and docker/entrypoint.sh.)
+
+# --- secrets: never copy real config into an image ---
+sre_agent/config.yaml
+**/config.yaml
+*.pem
+*.key
+*_token
+.sre_gl_token
+sre_gl_token
+
+# --- VCS / CI ---
+.git
+.gitignore
+.gitlab-ci.yml
+.github
+
+# --- python caches / build artifacts ---
+**/__pycache__
+*.pyc
+*.pyo
+.pytest_cache
+.ruff_cache
+.coverage
+coverage.xml
+build
+dist
+*.egg-info
+.venv
+venv
+
+# --- not needed at runtime ---
+tests
+docs
+*.md
+!sre_agent/README.md
+.DS_Store
