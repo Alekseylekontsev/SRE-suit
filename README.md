@@ -8,6 +8,10 @@ control.
 See the [full agent documentation](sre_agent/README.md) for configuration,
 supported operations, security controls, and deployment guidance.
 
+Additional governed validation patterns:
+
+- [Ambient Authentication Resilience Validation](docs/ambient-authentication-resilience-validation.md) — promoted Responder reference adapter for explicitly authorized validation of unintended authentication paths caused by name-resolution or discovery fallback.
+
 ## Development
 
 Requires Python 3.11 or newer.
